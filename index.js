@@ -6,6 +6,7 @@ var http = require('http');
 var fs = require('fs');
 var Download = require('download');
 var sanitize = require("sanitize-filename");
+var downloadStatus = require('download-status');
 
 var artistPage = process.argv[2]
 
@@ -25,19 +26,17 @@ request(artistPage, function (err, response, body) {
         url: 'http:' + item.file["mp3-128"]
       }
     })
+    var downloads = new Download({mode: '755'})
+
     _.each(baked, function (item, key) {
-      console.log('Downloading ' + item.title)
-      new Download({mode: '755'})
-        .get(item.url)
-        .rename({
-          basename: sanitize(item.title),
-          extname: '.m4a'
-        })
-        .dest('./out')
-        .run(function (err, files) {
-          if (err) console.log(err);
-          else console.log(files[0].path + ' has been downloaded');
-        })
+      downloads.get(item.url, sanitize(item.title) + '.m4a')
+    })
+
+    downloads
+      .use(downloadStatus())
+      .run(function (err, files) {
+        if (err) console.log(err);
+        else console.log(files[0].path + ' has been downloaded');
     })
   }
 })
