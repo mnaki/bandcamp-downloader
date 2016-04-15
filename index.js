@@ -10,7 +10,7 @@ var downloadStatus = require('download-status');
 
 var artistPage = process.argv[2]
 
-if (!_.startsWith(artistPage, 'http://'))
+if (!_.startsWith(artistPage, 'http'))
 {
   console.log('bad url')
   process.exit(1)
@@ -21,15 +21,17 @@ request(artistPage, function (err, response, body) {
     var data = body.split('trackinfo : ')[1].split('}],')[0] + '}]'
     var parsed = JSON.parse(data)
     var baked = _.map(parsed, function (item) {
-      return {
-        title: item.title,
-        url: 'http:' + item.file["mp3-128"]
-      }
+      if (item && item.file && item.file["mp3-128"])
+        return {
+          title: item.title,
+          url: 'http:' + item.file["mp3-128"]
+        }
     })
     var downloads = new Download({mode: '755'})
 
     _.each(baked, function (item, key) {
-      downloads.get(item.url, sanitize(item.title) + '.m4a')
+      if (item)
+        downloads.get(item.url, sanitize(item.title) + '.m4a')
     })
 
     downloads
